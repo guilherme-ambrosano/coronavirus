@@ -1,11 +1,16 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-2.0.0.min.css" rel="stylesheet" type="text/css" >
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-2.0.0.min.js" ></script>
     <title>Coronavírus</title>
 </head>
 <body>
-    {{script}}
-    {{div}}
+    <h1>Mortes por coronavirus ao longo do tempo</h1>
+    <p>Teste:</p>
+    {{ div|indent(4)|safe }}
+    {{ script|indent(4)|safe }}
 </body>
 </html>
