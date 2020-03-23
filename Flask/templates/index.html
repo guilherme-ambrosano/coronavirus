@@ -8,8 +8,18 @@
     <title>Coronavírus</title>
 </head>
 <body>
-    <h1>Mortes por coronavirus ao longo do tempo</h1>
-    <p>Teste:</p>
+    <h1>Casos por coronavirus ao longo do tempo</h1>
+    <p>Última atualização: {{ data }}</p>
+    <form action="/">
+        <select id="pais" name="pais">
+            {% for pais in paises %}
+            <option value="{{pais}}" {% if pais == selecionado %} selected {% endif %}> {{pais}} </option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Atualizar gráfico">
+    </form>
+
+    <p>Gráficos:</p>
     {{ div|indent(4)|safe }}
     {{ script|indent(4)|safe }}
 </body>

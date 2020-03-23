@@ -1,3 +1,4 @@
+*.xlsx
 
 # Created by https://www.gitignore.io/api/r
 # Edit at https://www.gitignore.io/?templates=r
@@ -45,10 +46,10 @@ vignettes/*.pdf
 # R package: bookdown caching files
 /*_files/
 
-# Pycharm
-Flask/.idea/
-Flask/__pycache__/
-Flask/venv/
+# Arquivos do Pycharm
+**/.idea/
+**/__pycache__/
+**/venv/
 
 
 
