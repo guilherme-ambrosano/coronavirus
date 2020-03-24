@@ -55,9 +55,11 @@ def atualizar_dados():
 def atualizar_localizacao(df):
     # Pegando coordenada dos países pelo geopy
     paises = df.groupby("Countries and territories").Cases.aggregate(sum)
+
     paises = pd.DataFrame(paises, columns=["Cases"])
     paises.index.name = "Countries and territories"
     paises.reset_index(inplace=True)
+
     paises["location"] = paises["Countries and territories"].replace("_", " ").apply(geocode)
     paises["point"] = paises["location"].apply(lambda loc: tuple(loc.point) if loc else None)
     return paises
@@ -69,12 +71,10 @@ def atualizar_grafico(pais=None):
     p = figure(plot_width=800, plot_height=250, x_axis_type="datetime")
     if pais is None:
         # Dados do mundo inteiro
-        print(df.head())
         p.circle(df["DateRep"], df["Deaths"], color="navy", alpha=0.5)
     else:
         # Dados do país selecionado
         df_pais = df.loc[df["Countries and territories"] == pais]
-        print(df_pais.head())
         p.circle(df_pais["DateRep"], df_pais["Cases"], color="navy", alpha=0.5)
 
     script, div = components(p)
