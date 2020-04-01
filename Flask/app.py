@@ -1,6 +1,7 @@
-#TODO: Gráfico acumulado
 #TODO: Alternar mortes/casos
 #TODO: Atualizar gráfico automaticamente
+#TODO: Calcular previsão usando dados de outros países
+#TODO: Fazer mapas dos casos nos países/estados
 #TODO: Embelezar o site
 
 import pandas as pd
@@ -11,7 +12,7 @@ from geopy.extra.rate_limiter import RateLimiter
 
 from bokeh.plotting import figure
 from bokeh.embed import components
-# from bokeh.io import show
+from bokeh.io import show
 
 from datetime import date, timedelta
 
@@ -28,8 +29,24 @@ geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
 
 def atualizar_dados():
     ontem = date.today() - timedelta(days=1)
-    ontem_str = ontem.strftime("%Y-%m-%d") + ".xlsx"
 
+    ontem_str_br = ontem.strftime("%Y%m%d") + ".csv"
+    arquivos_csv = [arq for arq in os.listdir(".") if arq.endswith(".csv")]
+    if ontem_str_br not in arquivos_csv:
+        # Baixando a planilha da internet e carregando no pandas
+        link = "https://covid.saude.gov.br/assets/files/COVID19_" + ontem_str_br
+        file_name, headers = urllib.request.urlretrieve(link)
+        df_br = pd.read_csv(file_name, sep=";", decimal=",")
+        df_br["data"] = pd.to_datetime(df_br["data"], format="%Y-%m-%d")
+
+        # Removendo os arquivos antigos
+        for arq in arquivos_csv:
+            os.remove(os.path.join(".", arq))
+
+        # Salvando a planilha nova
+        df_br.to_csv(ontem_str_br, sep=";", decimal=",", index=False)
+
+    ontem_str = ontem.strftime("%Y-%m-%d") + ".xlsx"
     arquivos_excel = [arq for arq in os.listdir(".") if arq.endswith(".xlsx")]
     if ontem_str not in arquivos_excel:
         # Baixando a planilha da internet e carregando no pandas
@@ -52,9 +69,11 @@ def atualizar_dados():
     else:
         # Se já tiver planilha, é só ler
         df = pd.read_excel(ontem_str)
+        df_br = pd.read_csv(ontem_str_br, sep=";", decimal=",")
+        df_br["data"] = pd.to_datetime(df_br["data"], format="%Y-%m-%d")
         paises = pd.read_excel("paises_" + ontem_str)
 
-    return ontem, paises, df
+    return paises, df, df_br
 
 
 def atualizar_localizacao(df):
@@ -70,33 +89,45 @@ def atualizar_localizacao(df):
     return paises
 
 
-def atualizar_grafico(pais=None):
-    ontem, paises, df = atualizar_dados()
+
+def atualizar_grafico_brasil(estado=None, df_br=None):
+    if df_br is None:
+        paises, df, df_br = atualizar_dados()
 
     p = figure(plot_width=800, plot_height=250, x_axis_type="datetime")
-    if pais is None:
-        # Dados do mundo inteiro
-        # p.circle(df["dateRep"], df["deaths"], color="navy", alpha=0.5)
-        pass
+    if estado is None:
+        # Dados do Brasil inteiro
+        p.circle(df_br["data"], df_br["casosAcumulados"], color="navy", alpha=0.5)
     else:
-        # Dados do país selecionado
-        df_pais = df.loc[df["countriesAndTerritories"] == pais]
-        p.circle(df_pais["dateRep"], df_pais["cases"], color="navy", alpha=0.5)
+        # Dados do estado selecionado
+        # FIXME: O gráfico tá em branco
+        df_estado = df_br.loc[df_br["estado"] == estado]
+        p.circle(df_estado["data"], df_estado["casosAcumulados"], color="navy", alpha=0.5)
 
     script, div = components(p)
-    return script, div, ontem, paises["countriesAndTerritories"]
+    return script, div
 
 
 @app.route("/")
 def main():
-    pais = request.args.get("pais")
-    selecionado = pais
-    if pais is not None:
-        pais = pais.replace(" ", "_")
-    script, div, ultima_atualizacao, paises = atualizar_grafico(pais=pais)
-    paises = paises.replace("_", " ", regex=True)
+    divs = []
+    scripts = []
+
+    estado = request.args.get("estado")
+
+    paises, df, df_br = atualizar_dados()
+    paises = paises["countriesAndTerritories"].replace("_", " ", regex=True)
+    estados = df_br["estado"].unique()
+
+    script, div = atualizar_grafico_brasil(estado=estado, df_br=df_br)
+    divs.append(div)
+    scripts.append(script)
+
+    ultima_atualizacao = date.today() - timedelta(days=1)
     data = ultima_atualizacao.strftime("%d/%m/%Y")
-    return render_template("index.html", script=script, div=div, data=data, paises=paises, selecionado=selecionado)
+
+    return render_template("index.html", scripts=scripts, divs=divs, data=data,
+                           estados=estados, estado=estado)
 
 
 if __name__ == "__main__":

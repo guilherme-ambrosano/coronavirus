@@ -11,16 +11,20 @@
     <h1>Casos de coronavirus ao longo do tempo</h1>
     <p>Última atualização: {{ data }}</p>
     <form action="/">
-        <select id="pais" name="pais">
-            {% for pais in paises %}
-            <option value="{{pais}}" {% if pais == selecionado %} selected {% endif %}> {{pais}} </option>
+        <select id="estado" name="estado">
+            {% for est in estados %}
+            <option value="{{est}}" {% if est == estado %} selected {% endif %}> {{est}} </option>
             {% endfor %}
         </select>
         <input type="submit" value="Atualizar gráfico">
     </form>
 
     <p>Gráficos:</p>
+    {% for div in divs %}
     {{ div|indent(4)|safe }}
+    {% endfor %}
+    {% for script in scripts %}
     {{ script|indent(4)|safe }}
+    {% endfor %}
 </body>
 </html>
