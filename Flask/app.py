@@ -54,13 +54,13 @@ def atualizar_dados():
 
 def atualizar_localizacao(df):
     # Pegando coordenada dos países pelo geopy
-    paises = df.groupby("Countries and territories").Cases.aggregate(sum)
+    paises = df.groupby("countriesAndTerritories").cases.aggregate(sum)
 
-    paises = pd.DataFrame(paises, columns=["Cases"])
-    paises.index.name = "Countries and territories"
+    paises = pd.DataFrame(paises, columns=["cases"])
+    paises.index.name = "countriesAndTerritories"
     paises.reset_index(inplace=True)
 
-    paises["location"] = paises["Countries and territories"].replace({"_": " "}).apply(geocode)
+    paises["location"] = paises["countriesAndTerritories"].replace({"_": " "}).apply(geocode)
     paises["point"] = paises["location"].apply(lambda loc: tuple(loc.point) if loc else None)
     return paises
 
@@ -71,14 +71,14 @@ def atualizar_grafico(pais=None):
     p = figure(plot_width=800, plot_height=250, x_axis_type="datetime")
     if pais is None:
         # Dados do mundo inteiro
-        p.circle(df["DateRep"], df["Deaths"], color="navy", alpha=0.5)
+        p.circle(df["dateRep"], df["deaths"], color="navy", alpha=0.5)
     else:
         # Dados do país selecionado
-        df_pais = df.loc[df["Countries and territories"] == pais]
-        p.circle(df_pais["DateRep"], df_pais["Cases"], color="navy", alpha=0.5)
+        df_pais = df.loc[df["countriesAndTerritories"] == pais]
+        p.circle(df_pais["dateRep"], df_pais["cases"], color="navy", alpha=0.5)
 
     script, div = components(p)
-    return script, div, ontem, paises["Countries and territories"]
+    return script, div, ontem, paises["countriesAndTerritories"]
 
 
 @app.route("/")
