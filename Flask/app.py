@@ -60,7 +60,7 @@ def atualizar_localizacao(df):
     paises.index.name = "Countries and territories"
     paises.reset_index(inplace=True)
 
-    paises["location"] = paises["Countries and territories"].replace("_", " ").apply(geocode)
+    paises["location"] = paises["Countries and territories"].replace({"_": " "}).apply(geocode)
     paises["point"] = paises["location"].apply(lambda loc: tuple(loc.point) if loc else None)
     return paises
 
