@@ -17,14 +17,41 @@ from bokeh.io import show
 from datetime import date, timedelta
 
 from flask import Flask, render_template, request
+from flask import flash, session
+from flask_session import Session
+from tempfile import mkdtemp
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import check_password_hash, generate_password_hash
 
 import os
 
+# Criando o aplicativo Flask
 app = Flask("__name__")
+
+# Configurando o banco de dados
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
+db = SQLAlchemy(app)
+
+# Configurando sessão Flask
+app.config["SESSION_FILE_DIR"] = mkdtemp()
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_TYPE"] = "filesystem"
+Session(app)
 
 # Configurando o geopy
 geolocator = Nominatim(user_agent="corona")
 geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
+
+
+class DataframeMundo:
+    def __init__(self):
+        pass
+
+
+class DataframeBrasil:
+    def __init__(self):
+        pass
 
 
 def atualizar_dados():
@@ -33,18 +60,19 @@ def atualizar_dados():
     ontem_str_br = ontem.strftime("%Y%m%d") + ".csv"
     arquivos_csv = [arq for arq in os.listdir(".") if arq.endswith(".csv")]
     if ontem_str_br not in arquivos_csv:
+        pass
         # Baixando a planilha da internet e carregando no pandas
-        link = "https://covid.saude.gov.br/assets/files/COVID19_" + ontem_str_br
-        file_name, headers = urllib.request.urlretrieve(link)
-        df_br = pd.read_csv(file_name, sep=";", decimal=",")
-        df_br["data"] = pd.to_datetime(df_br["data"], format="%Y-%m-%d")
+        # FIXME: o https://covid.saude.gov.br/ dificultou o acesso aos dados, vai ter que dar um jeito de entrar manualmente
+        # file_name, headers = urllib.request.urlretrieve(link)
+        # df_br = pd.read_csv(file_name, sep=";", decimal=",")
+        # df_br["data"] = pd.to_datetime(df_br["data"], format="%Y-%m-%d")
 
         # Removendo os arquivos antigos
-        for arq in arquivos_csv:
-            os.remove(os.path.join(".", arq))
+        # for arq in arquivos_csv:
+        #     os.remove(os.path.join(".", arq))
 
         # Salvando a planilha nova
-        df_br.to_csv(ontem_str_br, sep=";", decimal=",", index=False)
+        # df_br.to_csv(ontem_str_br, sep=";", decimal=",", index=False)
 
     ontem_str = ontem.strftime("%Y-%m-%d") + ".xlsx"
     arquivos_excel = [arq for arq in os.listdir(".") if arq.endswith(".xlsx")]
@@ -100,7 +128,6 @@ def atualizar_grafico_brasil(estado=None, df_br=None):
         p.circle(df_br["data"], df_br["casosAcumulados"], color="navy", alpha=0.5)
     else:
         # Dados do estado selecionado
-        # FIXME: O gráfico tá em branco
         df_estado = df_br.loc[df_br["estado"] == estado]
         p.circle(df_estado["data"], df_estado["casosAcumulados"], color="navy", alpha=0.5)
 
