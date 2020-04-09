@@ -57,23 +57,6 @@ class DataframeBrasil:
 def atualizar_dados():
     ontem = date.today() - timedelta(days=1)
 
-    ontem_str_br = ontem.strftime("%Y%m%d") + ".csv"
-    arquivos_csv = [arq for arq in os.listdir(".") if arq.endswith(".csv")]
-    if ontem_str_br not in arquivos_csv:
-        pass
-        # Baixando a planilha da internet e carregando no pandas
-        # FIXME: o https://covid.saude.gov.br/ dificultou o acesso aos dados, vai ter que dar um jeito de entrar manualmente
-        # file_name, headers = urllib.request.urlretrieve(link)
-        # df_br = pd.read_csv(file_name, sep=";", decimal=",")
-        # df_br["data"] = pd.to_datetime(df_br["data"], format="%Y-%m-%d")
-
-        # Removendo os arquivos antigos
-        # for arq in arquivos_csv:
-        #     os.remove(os.path.join(".", arq))
-
-        # Salvando a planilha nova
-        # df_br.to_csv(ontem_str_br, sep=";", decimal=",", index=False)
-
     ontem_str = ontem.strftime("%Y-%m-%d") + ".xlsx"
     arquivos_excel = [arq for arq in os.listdir(".") if arq.endswith(".xlsx")]
     if ontem_str not in arquivos_excel:
@@ -87,21 +70,30 @@ def atualizar_dados():
         for arq in arquivos_excel:
             os.remove(os.path.join(".", arq))
 
+        # Criando coluna casesCumulative, com o número cumulativo de casos
+        # (começando no primeiro dia, indo até o último)
+        df["casesCumulative"] = df.iloc[::-1].groupby("countriesAndTerritories").cases.cumsum()[::-1]
+
+        # Criando a coluna week e a coluna
+        # casesDiff, com a diferença entre o número de casos entre as duas semanas
+        # df["week"] = df.dateRep.dt.week
+        df["casesDiff"] = df.iloc[::-1].groupby("countriesAndTerritories").casesCumulative.diff()[::-1]
+
         # Salvando a planilha nova
         df.to_excel(ontem_str)
 
         # Pegando as coordenadas dos países
-        paises = atualizar_localizacao(df)
-        paises.to_excel("paises_" + ontem_str)
+        # paises = atualizar_localizacao(df)
+        # paises.to_excel("paises_" + ontem_str)
+        paises = None
 
     else:
         # Se já tiver planilha, é só ler
         df = pd.read_excel(ontem_str)
-        df_br = pd.read_csv(ontem_str_br, sep=";", decimal=",")
-        df_br["data"] = pd.to_datetime(df_br["data"], format="%Y-%m-%d")
-        paises = pd.read_excel("paises_" + ontem_str)
+        # paises = pd.read_excel("paises_" + ontem_str)
+        paises = None
 
-    return paises, df, df_br
+    return paises, df
 
 
 def atualizar_localizacao(df):
@@ -117,19 +109,43 @@ def atualizar_localizacao(df):
     return paises
 
 
+def atualizar_grafico_aumento(pais=None, df=None):
+    if df is None:
+        paises, df = atualizar_dados()
 
-def atualizar_grafico_brasil(estado=None, df_br=None):
-    if df_br is None:
-        paises, df, df_br = atualizar_dados()
-
-    p = figure(plot_width=800, plot_height=250, x_axis_type="datetime")
-    if estado is None:
-        # Dados do Brasil inteiro
-        p.circle(df_br["data"], df_br["casosAcumulados"], color="navy", alpha=0.5)
+    p = figure(plot_width=800, plot_height=250, x_axis_type="datetime",
+               x_axis_label="Tempo",
+               y_axis_label="Número acumulado de casos")
+    # Criando coluna casesCumulative, com o número cumulativo de casos (começando no primeiro dia, indo até o último)
+    df["casesCumulative"] = df.iloc[::-1].groupby("countriesAndTerritories").cases.cumsum()[::-1]
+    if pais is None:
+        # Dados do mundo inteiro
+        p.circle(df["dateRep"], df["casesCumulative"], color="navy", alpha=0.1)
     else:
-        # Dados do estado selecionado
-        df_estado = df_br.loc[df_br["estado"] == estado]
-        p.circle(df_estado["data"], df_estado["casosAcumulados"], color="navy", alpha=0.5)
+        # Dados do país selecionado
+        df_pais = df.loc[df["countriesAndTerritories"] == pais]
+        p.circle(df_pais["dateRep"], df_pais["casesCumulative"], color="navy", alpha=0.5)
+
+    script, div = components(p)
+    return script, div
+
+
+def atualizar_grafico_expon(pais=None, df=None):
+    if df is None:
+        paises, df = atualizar_dados()
+
+    p = figure(plot_width=800, plot_height=250, y_axis_type="log", x_axis_type="log",
+               x_axis_label="Diferença no número de casos do dia anterior",
+               y_axis_label="Número acumulado de casos")
+    if pais is None:
+        # Dados do mundo inteiro
+        p.line([1, max(df.casesCumulative)], [1, max(df.casesDiff)], color="red")
+        p.line(df["casesCumulative"], df["casesDiff"], color="navy", alpha=0.1)
+    else:
+        # Dados do país selecionado
+        df_pais = df.loc[df["countriesAndTerritories"] == pais]
+        p.line([1, max(df_pais.casesCumulative)], [1, max(df_pais.casesDiff)], color="red")
+        p.line(df_pais["casesCumulative"], df_pais["casesDiff"], color="navy", alpha=0.5)
 
     script, div = components(p)
     return script, div
@@ -140,13 +156,19 @@ def main():
     divs = []
     scripts = []
 
-    estado = request.args.get("estado")
+    pais = request.args.get("pais")
+    selecionado = pais
+    if pais is not None:
+        pais = pais.replace(" ", "_")
 
-    paises, df, df_br = atualizar_dados()
-    paises = paises["countriesAndTerritories"].replace("_", " ", regex=True)
-    estados = df_br["estado"].unique()
+    paises, df = atualizar_dados()
+    paises = df["countriesAndTerritories"].replace("_", " ", regex=True).unique()
 
-    script, div = atualizar_grafico_brasil(estado=estado, df_br=df_br)
+    script, div = atualizar_grafico_aumento(pais=pais, df=df)
+    divs.append(div)
+    scripts.append(script)
+
+    script, div = atualizar_grafico_expon(pais=pais, df=df)
     divs.append(div)
     scripts.append(script)
 
@@ -154,7 +176,7 @@ def main():
     data = ultima_atualizacao.strftime("%d/%m/%Y")
 
     return render_template("index.html", scripts=scripts, divs=divs, data=data,
-                           estados=estados, estado=estado)
+                           paises=paises, selecionado=selecionado)
 
 
 if __name__ == "__main__":

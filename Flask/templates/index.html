@@ -8,12 +8,12 @@
     <title>Coronavírus</title>
 </head>
 <body>
-    <h1>Casos de coronavirus ao longo do tempo</h1>
+    <h1>Coronavírus</h1>
     <p>Última atualização: {{ data }}</p>
     <form action="/">
-        <select id="estado" name="estado">
-            {% for est in estados %}
-            <option value="{{est}}" {% if est == estado %} selected {% endif %}> {{est}} </option>
+        <select id="pais" name="pais">
+            {% for p in paises %}
+            <option value="{{p}}" {% if p == selecionado %} selected {% endif %}> {{p}} </option>
             {% endfor %}
         </select>
         <input type="submit" value="Atualizar gráfico">
