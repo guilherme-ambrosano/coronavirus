@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block body %}
+<h2>Artigos científicos</h2>
+<hr>
+{% for artigo in artigos %}
+<div class="col-sm">
+    <div class="row"> {{ artigo.data }} </div>
+    <div class="row">
+        <a href="{{ artigo.link }}" target="_blank">
+            {{ artigo.titulo }}
+        </a>
+        <div class="row"> {{ artigo.ano }} </div>
+        <div class="row"> {{ artigo.autores }} </div>
+    </div>
+</div>
+<hr>
+{% endfor %}
+{% endblock %}

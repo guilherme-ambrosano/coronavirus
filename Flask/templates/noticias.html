@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block body %}
+<h2>Notícias</h2>
+<hr>
+{% for noticia in noticias %}
+<div class="row-align-items-center justify-content-around">
+    <div class="col-sm"
+    <a href="{{ noticia.link }}" target="_blank">
+    <img src="{{ noticia.img }}" width="250" height="140">
+    </a>
+</div>
+<div class="col-sm">
+    <div class="row"> {{ noticia.data }} </div>
+    <div class="row">
+        <a href="{{ noticia.link }}" target="_blank">
+        {{ noticia.titulo }}
+        </a>
+    </div>
+</div>
+<hr>
+{% endfor %}
+{% endblock %}

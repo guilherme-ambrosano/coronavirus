@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block body %}
+<h2> Fontes consultadas </h2>
+<br>
+<h3> Nacionais </h3>
+<hr>
+{% for fonte in nacionais %}
+<div class="col-sm">
+    <div class="row">
+        <a href="{{ fonte.link }}" target="_blank">
+        {{ fonte.nome }}
+        </a>
+    </div>
+</div>
+<hr>
+{% endfor %}
+<h3> Internacionais </h3>
+<hr>
+{% for fonte in internacionais %}
+<div class="col-sm">
+    <div class="row">
+        <a href="{{ fonte.link }}" target="_blank">
+            {{ fonte.nome }}
+        </a>
+    </div>
+</div>
+<hr>
+{% endfor %}
+{% endblock %}

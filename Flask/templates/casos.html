@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block body %}
+    <h2>Casos de COVID-19</h2>
+    <hr>
+    <p>Última atualização: {{ data }}</p>
+    <hr>
+    <form action="/casos">
+        <select id="pais" name="pais">
+            {% for p in paises %}
+            <option value="{{p}}" {% if p == selecionado %} selected {% endif %}> {{p}} </option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Atualizar gráficos">
+    </form>
+    <hr>
+
+    <h3>Gráficos</h3>
+    <hr>
+    <div class="col-sm">
+        {% for div in divs %}
+        <div class="row align-items-center justify-content-aroung">
+            {{ div|indent(4)|safe }}
+        </div>
+        <hr>
+        {% endfor %}
+    </div>
+    {% for script in scripts %}
+    {{ script|indent(4)|safe }}
+    {% endfor %}
+{% endblock %}

@@ -1,8 +1,11 @@
 #TODO: Alternar mortes/casos
 #TODO: Atualizar gráfico automaticamente
 #TODO: Calcular previsão usando dados de outros países
-#TODO: Fazer mapas dos casos nos países/estados
 #TODO: Embelezar o site
+
+#TODO: Implementar a session/login
+#TODO: Criar db com notícias/artigos/etc.
+#TODO: Área do site para pessoa autenticada postar/moderar as postagens
 
 import pandas as pd
 import urllib
@@ -12,6 +15,7 @@ from geopy.extra.rate_limiter import RateLimiter
 
 from bokeh.plotting import figure
 from bokeh.embed import components
+from bokeh.models import DatetimeTickFormatter
 from bokeh.io import show
 
 from datetime import date, timedelta
@@ -61,7 +65,7 @@ def atualizar_dados():
     arquivos_excel = [arq for arq in os.listdir(".") if arq.endswith(".xlsx")]
     if ontem_str not in arquivos_excel:
         # Baixando a planilha da internet e carregando no pandas
-        link = "https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide-" + \
+        link = "https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide-"+\
                ontem_str
         file_name, headers = urllib.request.urlretrieve(link)
         df = pd.read_excel(file_name)
@@ -76,8 +80,7 @@ def atualizar_dados():
 
         # Criando a coluna week e a coluna
         # casesDiff, com a diferença entre o número de casos entre as duas semanas
-        # df["week"] = df.dateRep.dt.week
-        df["casesDiff"] = df.iloc[::-1].groupby("countriesAndTerritories").casesCumulative.diff()[::-1]
+        df["week"] = df.dateRep.dt.week
 
         # Salvando a planilha nova
         df.to_excel(ontem_str)
@@ -114,8 +117,8 @@ def atualizar_grafico_aumento(pais=None, df=None):
         paises, df = atualizar_dados()
 
     p = figure(plot_width=800, plot_height=250, x_axis_type="datetime",
-               x_axis_label="Tempo",
-               y_axis_label="Número acumulado de casos")
+               x_axis_label="Data",
+               y_axis_label="Casos acumulados")
     # Criando coluna casesCumulative, com o número cumulativo de casos (começando no primeiro dia, indo até o último)
     df["casesCumulative"] = df.iloc[::-1].groupby("countriesAndTerritories").cases.cumsum()[::-1]
     if pais is None:
@@ -126,6 +129,7 @@ def atualizar_grafico_aumento(pais=None, df=None):
         df_pais = df.loc[df["countriesAndTerritories"] == pais]
         p.circle(df_pais["dateRep"], df_pais["casesCumulative"], color="navy", alpha=0.5)
 
+    p.xaxis.formatter = DatetimeTickFormatter(days=["%d/%m/%Y"])
     script, div = components(p)
     return script, div
 
@@ -135,16 +139,18 @@ def atualizar_grafico_expon(pais=None, df=None):
         paises, df = atualizar_dados()
 
     p = figure(plot_width=800, plot_height=250, y_axis_type="log", x_axis_type="log",
-               x_axis_label="Diferença no número de casos do dia anterior",
-               y_axis_label="Número acumulado de casos")
+               x_axis_label="Diferença no número de casos da semana anterior",
+               y_axis_label="Casos acumulados por semana")
+    df = df.groupby(["week", "countriesAndTerritories"]).sum().reset_index()
+    df["casesDiff"] = df.groupby("countriesAndTerritories").casesCumulative.diff()
     if pais is None:
         # Dados do mundo inteiro
-        p.line([1, max(df.casesCumulative)], [1, max(df.casesDiff)], color="red")
+        p.line([1, max(df.casesCumulative)], [1, max(df.casesDiff.dropna())], color="red")
         p.line(df["casesCumulative"], df["casesDiff"], color="navy", alpha=0.1)
     else:
         # Dados do país selecionado
         df_pais = df.loc[df["countriesAndTerritories"] == pais]
-        p.line([1, max(df_pais.casesCumulative)], [1, max(df_pais.casesDiff)], color="red")
+        p.line([1, max(df_pais.casesCumulative)], [1, max(df_pais.casesDiff.dropna())], color="red")
         p.line(df_pais["casesCumulative"], df_pais["casesDiff"], color="navy", alpha=0.5)
 
     script, div = components(p)
@@ -153,6 +159,12 @@ def atualizar_grafico_expon(pais=None, df=None):
 
 @app.route("/")
 def main():
+    #TODO: puxar automaticamente notícias recentes da Nature, PubMed, atualizações do Twitter, etc.
+    return render_template("index.html", route="home")
+
+
+@app.route("/casos")
+def casos():
     divs = []
     scripts = []
 
@@ -175,8 +187,27 @@ def main():
     ultima_atualizacao = date.today() - timedelta(days=1)
     data = ultima_atualizacao.strftime("%d/%m/%Y")
 
-    return render_template("index.html", scripts=scripts, divs=divs, data=data,
-                           paises=paises, selecionado=selecionado)
+    return render_template("casos.html", scripts=scripts, divs=divs, data=data,
+                           paises=paises, selecionado=selecionado,
+                           route="casos")
+
+
+@app.route("/noticias")
+def noticias():
+    return render_template("noticias.html", route="noticias",
+                           noticias=[])
+
+
+@app.route("/artigos")
+def artigos():
+    return render_template("artigos.html", route="artigos",
+                           artigos=[])
+
+
+@app.route("/fontes")
+def fontes():
+    return render_template("fontes.html", route="fontes",
+                           nacionais=[], internacionais=[])
 
 
 if __name__ == "__main__":

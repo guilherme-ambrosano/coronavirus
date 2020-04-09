@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-2.0.0.min.css" rel="stylesheet" type="text/css" >
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-2.0.0.min.js" ></script>
+
+
+        <link rel="stylesheet" type="text/css"  href="static/styles.css">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <title>Coronavírus</title>
+</head>
+<body>
+    {% block navbar %}
+     <div class="navbar row justify-content-center lead fixed-top navbar-lioght background-light" style="background:white">
+         <nav class="navbar">
+             <div class="column">
+                 <a class="navbar-header navbar-brand" href="/">
+                     <img src="/static/images/logo.png" width="50" height="50" alt="">
+                 </a>
+             </div>
+             <div class="navbar nav-tabs nav-center column">
+                 <a
+                         {% if route == 'home' %}
+                         class="nav-item nav-link active"
+                         {% else %}
+                         class="nav-item nav-link"
+                         {% endif %}
+                         href="/">Home</a>
+                 <a
+                         {% if route == 'casos' %}
+                         class="nav-item nav-link active"
+                         {% else %}
+                         class="nav-item nav-link"
+                         {% endif %}
+                         href="/casos"> Casos de COVID-19 no mundo</a>
+                 <a
+                         {% if route == 'noticias' %}
+                         class="nav-item nav-link active"
+                         {% else %}
+                         class="nav-item nav-link"
+                         {% endif %}
+                         href="/noticias">Notícias</a>
+                 <a
+                         {% if route == 'artigos' %}
+                         class="nav-item nav-link active"
+                         {% else %}
+                         class="nav-item nav-link"
+                         {% endif %}
+                         href="/artigos">Artigos científicos</a>
+                 <a
+                         {% if route == 'fontes' %}
+                         class="nav-item nav-link active"
+                         {% else %}
+                         class="nav-item nav-link"
+                         {% endif %}
+                         href="/fontes">Fontes consultadas</a>
+             </div>
+         </nav>
+     </div>
+    {% endblock %}
+    <div class="row justify-content-center" style="padding-top:120px;">
+        <div class="container">
+            {% block body %}
+            {% endblock %}
+        </div>
+    </div>
+</body>
+</html>
