@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block body %}
-    <h2>Casos de COVID-19</h2>
+    <h2>Casos de COVID-19{% if selecionado is not none %}: {{ selecionado }}{% endif %}</h2>
     <hr>
     <p>Última atualização: {{ data }}</p>
     <hr>
