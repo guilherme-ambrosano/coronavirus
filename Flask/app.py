@@ -7,6 +7,8 @@
 #TODO: Criar db com notícias/artigos/etc.
 #TODO: Área do site para pessoa autenticada postar/moderar as postagens
 
+import math
+
 import pandas as pd
 import urllib
 
@@ -18,6 +20,8 @@ from bokeh.embed import components
 from bokeh.models import DatetimeTickFormatter, WheelZoomTool
 from bokeh.tile_providers import CARTODBPOSITRON, get_provider
 from bokeh.io import show
+
+from ast import literal_eval
 
 from datetime import date, timedelta
 
@@ -99,17 +103,6 @@ def atualizar_dados():
     return paises, df
 
 
-def geocode_print(x):
-    print(x)
-    try:
-        geo = geocode(x)
-        print("deu\n")
-    except:
-        print("não deu\n")
-        geo = {"point": (None, None)}
-    return geo
-
-
 def atualizar_localizacao(df):
     # Pegando coordenada dos países pelo geopy
     paises = df.groupby("countriesAndTerritories").cases.aggregate(sum)
@@ -118,10 +111,8 @@ def atualizar_localizacao(df):
     paises.index.name = "countriesAndTerritories"
     paises.reset_index(inplace=True)
 
-    paises["location"] = paises["countriesAndTerritories"].replace("_", " ", regex=True).apply(geocode_print)
-    print(paises.head())
+    paises["location"] = paises["countriesAndTerritories"].replace("_", " ", regex=True).apply(geocode)
     paises["point"] = paises["location"].apply(lambda loc: tuple(loc.point) if loc else None)
-    print(paises.head())
     return paises
 
 
@@ -172,20 +163,35 @@ def atualizar_grafico_expon(pais=None, df=None):
     return script, div
 
 
+def merc(point):
+    if point is pd.np.nan:
+        return None, None
+
+    lat, lon, alt = literal_eval(point)
+
+    r_major = 6378137.000
+    x = r_major * math.radians(lon)
+    scale = x/lon
+    y = 180.0/math.pi * math.log(math.tan(math.pi/4.0 + lat * (math.pi/180.0)/2.0)) * scale
+
+    return x, y
+
+
 def atualizar_grafico_mapa(paises=None):
     if paises is None:
         paises, df = atualizar_dados()
 
-    paises["x"] = paises.point.apply(lambda x: x[0])
-    paises["y"] = paises.point.apply(lambda x: x[1])
+    paises["x"] = paises.point.apply(lambda x: merc(x)[0])
+    paises["y"] = paises.point.apply(lambda x: merc(x)[1])
     tile_provider = get_provider(CARTODBPOSITRON)
-    p = figure(x_range=(-2000000, 6000000), y_range=(-1000000, 7000000),
+    p = figure(plot_width=800, plot_height=500,
+               x_range=(-2000000, 6000000), y_range=(-1000000, 7000000),
                x_axis_type="mercator", y_axis_type="mercator")
     p.toolbar.active_scroll = p.select_one(WheelZoomTool)
     p.add_tile(tile_provider)
     p.circle(x=paises.x,
              y=paises.y,
-             size=paises.cases,
+             size=paises.cases/5000,
              line_color="navy",
              fill_color="navy",
              fill_alpha=0.05)
@@ -211,7 +217,7 @@ def casos():
 
     paises, df = atualizar_dados()
 
-    script, div = atualizar_grafico_mapa(df=df, paises=paises)
+    script, div = atualizar_grafico_mapa(paises=paises)
     divs.append(div)
     scripts.append(script)
 
