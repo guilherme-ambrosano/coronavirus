@@ -1,1 +1,21 @@
 {% extends "layout.html" %}
+{% block body %}
+<h2>Artigos recentes</h2>
+<hr>
+{% for artigo in artigos %}
+<div class="col-sm">
+    <div class="row"> {{ artigo.onlineDate }} </div>
+    <div class="row">
+        <a href="{{ artigo.url.value }}" target="_blank">
+            {{ artigo.title }}
+        </a>
+    </div>
+    <div class="row">
+        {% for creator in creators %}
+          {{ creator.creator }}
+        {% endfor %}
+    </div>
+</div>
+<hr>
+{% endfor %}
+{% endblock %}

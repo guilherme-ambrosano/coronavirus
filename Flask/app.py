@@ -10,6 +10,7 @@
 import math
 
 import pandas as pd
+import numpy as np
 import urllib
 
 from geopy.geocoders import Nominatim
@@ -31,6 +32,8 @@ from flask_session import Session
 from tempfile import mkdtemp
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
+
+import requests
 
 import os
 
@@ -164,7 +167,7 @@ def atualizar_grafico_expon(pais=None, df=None):
 
 
 def merc(point):
-    if point is pd.np.nan:
+    if point is np.nan:
         return None, None
 
     lat, lon, alt = literal_eval(point)
@@ -199,10 +202,25 @@ def atualizar_grafico_mapa(paises=None):
     script, div = components(p)
     return script, div
 
+
 @app.route("/")
 def main():
     #TODO: puxar automaticamente notícias recentes da Nature, PubMed, atualizações do Twitter, etc.
-    return render_template("index.html", route="home")
+
+    # PubMed
+    date_format = "%Y-%m-%d"
+    dateto = "onlinedateto:" + date.today().strftime(date_format)
+    datefrom = "onlinedatefrom:" + (date.today() - timedelta(days=7)).strftime(date_format)
+    openaccess = "openaccess:true"
+    title = "(title:covid-19 OR title:covid19)"
+    sort = "sort:date"
+    user_key = "api_key=d3ad1f83983be500c6aeb4a03b2e7e1a"
+    request = "https://api.springernature.com/meta/v2/json?q=" +\
+              datefrom + " " + dateto + " " + openaccess + " " + title + " " + sort + "&" + user_key
+    response = requests.get(request)
+    artigos = response.json()["records"]
+
+    return render_template("index.html", route="home", artigos=artigos)
 
 
 @app.route("/casos")
