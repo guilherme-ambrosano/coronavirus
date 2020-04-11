@@ -274,5 +274,10 @@ def fontes():
                            nacionais=[], internacionais=[])
 
 
+@app.route("/contato")
+def contato():
+    return render_template("contato.html", route="contato")
+
+
 if __name__ == "__main__":
     app.run()
