@@ -2,7 +2,7 @@
 {% block body %}
 <h2>Artigos recentes</h2>
 <hr>
-{% for artigo in artigos %}
+{% for artigo in pubmed %}
 <div class="col-sm">
     <div class="row"> {{ artigo.onlineDate }} </div>
     <div class="row">
@@ -11,9 +11,7 @@
         </a>
     </div>
     <div class="row">
-        {% for creator in creators %}
-          {{ creator.creator }}
-        {% endfor %}
+        {{ artigo.authors }}
     </div>
 </div>
 <hr>
