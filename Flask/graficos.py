@@ -1,3 +1,7 @@
+# TODO: Atualizar gráfico automaticamente
+# TODO: Alternar mortes/casos
+# TODO: Calcular previsão usando dados de outros países
+
 import math
 
 import pandas as pd
@@ -15,6 +19,14 @@ from ast import literal_eval
 from datetime import date, timedelta
 
 import os
+
+from geopy.geocoders import Nominatim
+from geopy.extra.rate_limiter import RateLimiter
+
+
+# Configurando o geopy
+geolocator = Nominatim(user_agent="corona", timeout=10)
+geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
 
 
 class DataframeMundo:

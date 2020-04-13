@@ -1,15 +1,4 @@
-# TODO: Alternar mortes/casos
-# TODO: Atualizar gráfico automaticamente
-# TODO: Calcular previsão usando dados de outros países
 # TODO: Embelezar o site
-
-# TODO: Implementar a session/login
-# TODO: Criar db com notícias/artigos/etc.
-# TODO: Área do site para pessoa autenticada postar/moderar as postagens
-
-
-from geopy.geocoders import Nominatim
-from geopy.extra.rate_limiter import RateLimiter
 
 from datetime import date, timedelta
 
@@ -24,7 +13,7 @@ import os
 
 from graficos import atualizar_dados,\
     atualizar_grafico_aumento, atualizar_grafico_expon, atualizar_grafico_mapa
-from bases import atualizar_pubmed
+from bases import atualizar_pubmed, atualizar_springer
 
 
 # Criando o aplicativo Flask
@@ -42,16 +31,15 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# Configurando o geopy
-geolocator = Nominatim(user_agent="corona", timeout=10)
-geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
-
 
 @app.route("/")
 def main():
+    # TODO: Watson
 
+    springer = atualizar_springer()
     pubmed = atualizar_pubmed()
-    return render_template("index.html", route="home", pubmed=pubmed)
+    return render_template("index.html", route="home", springer=springer,
+                           pubmed=pubmed)
 
 
 @app.route("/casos")

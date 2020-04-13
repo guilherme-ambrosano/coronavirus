@@ -1,12 +1,28 @@
 {% extends "layout.html" %}
 {% block body %}
-<h2>Artigos recentes</h2>
+<h2>Artigos recentes (Springer Nature)</h2>
+<hr>
+{% for artigo in springer %}
+<div class="col-sm">
+    <div class="row"> {{ artigo.onlineDate }} </div>
+    <div class="row">
+        <a href="{{ artigo.url.value }}" target="_blank">
+            {{ artigo.title }}
+        </a>
+    </div>
+    <div class="row">
+        {{ artigo.authors }}
+    </div>
+</div>
+<hr>
+{% endfor %}
+<h2>Artigos recentes (PubMed)</h2>
 <hr>
 {% for artigo in pubmed %}
 <div class="col-sm">
     <div class="row"> {{ artigo.onlineDate }} </div>
     <div class="row">
-        <a href="{{ artigo.url.value }}" target="_blank">
+        <a href="{{ artigo.link }}" target="_blank">
             {{ artigo.title }}
         </a>
     </div>
