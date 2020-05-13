@@ -18,7 +18,7 @@ def atualizar_springer():
     arquivos_texto = [arq for arq in os.listdir(".") if arq.endswith(".txt")]
 
     if ontem_str in arquivos_texto:
-        with open(ontem_str) as file:
+        with open(ontem_str, encoding="utf-8") as file:
             records = literal_eval(file.read())
     else:
         locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
@@ -45,7 +45,7 @@ def atualizar_springer():
             if arq.startswith("springer_"):
                 os.remove(os.path.join(".", arq))
 
-        with open(ontem_str, "w+") as file:
+        with open(ontem_str, "w+", encoding="utf-8") as file:
             file.write(str(records))
 
     return records
@@ -57,7 +57,7 @@ def atualizar_pubmed():
 
     arquivos_texto = [arq for arq in os.listdir(".") if arq.endswith(".txt")]
     if ontem_str in arquivos_texto:
-        with open(ontem_str) as file:
+        with open(ontem_str, encoding="utf-8") as file:
             records = literal_eval(file.read())
     else:
         locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
@@ -96,7 +96,7 @@ def atualizar_pubmed():
             if arq.startswith("pubmed_"):
                 os.remove(os.path.join(".", arq))
 
-        with open(ontem_str, "w+") as file:
+        with open(ontem_str, "w+", encoding="utf-8") as file:
             file.write(str(records))
 
     return records

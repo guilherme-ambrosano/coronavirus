@@ -48,7 +48,7 @@ def atualizar_dados():
         # Baixando a planilha da internet e carregando no pandas
         link = "https://www.ecdc.europa.eu/sites/default/files/documents/" \
                "COVID-19-geographic-disbtribution-worldwide-" + ontem_str
-        file_name, headers = urllib.request.urlretrieve(link)
+        file_name, _ = urllib.request.urlretrieve(link)
         df = pd.read_excel(file_name)
 
         # Removendo as planilhas antigas
@@ -93,7 +93,7 @@ def atualizar_localizacao(df):
 
 def atualizar_grafico_aumento(pais=None, df=None):
     if df is None:
-        paises, df = atualizar_dados()
+        _, df = atualizar_dados()
 
     p = figure(plot_width=800, plot_height=250, x_axis_type="datetime",
                x_axis_label="Data",
@@ -142,7 +142,7 @@ def merc(point):
     if point is np.nan:
         return None, None
 
-    lat, lon, alt = literal_eval(point)
+    lat, lon, _ = literal_eval(point)
 
     r_major = 6378137.000
     x = r_major * math.radians(lon)

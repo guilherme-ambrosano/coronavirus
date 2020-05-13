@@ -22,8 +22,8 @@ app = Flask("__name__")
 # Configurando o banco de dados
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Colocar o caminho pra database nas variáveis do ambiente (e.g.: DATABASE_URL = /database.db)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
-db = SQLAlchemy(app)
+# app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
+# db = SQLAlchemy(app)
 
 # Configurando sessão Flask
 app.config["SESSION_FILE_DIR"] = mkdtemp()
@@ -69,10 +69,10 @@ def casos():
     ultima_atualizacao = date.today() - timedelta(days=1)
     data = ultima_atualizacao.strftime("%d/%m/%Y")
 
-    paises = df["countriesAndTerritories"].replace("_", " ", regex=True).unique()
+    paises_txt = df["countriesAndTerritories"].replace("_", " ", regex=True).unique()
     return render_template("casos.html", scripts=scripts, divs=divs, data=data,
-                           paises=paises, selecionado=selecionado,
-                           route="casos")
+                           paises=paises_txt, selecionado=selecionado,
+                           route="casos", df=df.reset_index().to_dict("list"))
 
 
 @app.route("/noticias")
