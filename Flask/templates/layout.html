@@ -3,20 +3,21 @@
 
 <head>
     <meta charset="UTF-8">
-    <link href="http://cdn.pydata.org/bokeh/release/bokeh-2.0.0.min.css" rel="stylesheet" type="text/css" >
-    <script src="http://cdn.pydata.org/bokeh/release/bokeh-2.0.0.min.js" ></script>
+    
+    <link rel="stylesheet" type="text/css" href="static/styles.css">
+    <link rel="stylesheet" type="text/css"
+        href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 
-    <link rel="stylesheet" type="text/css"  href="static/styles.css">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script type="module"
+        src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <title>Coronavírus</title>
     {% block head %}
     {% endblock %}
 </head>
 <body>
     {% block navbar %}
-     <div class="navbar row justify-content-center lead fixed-top navbar-lioght background-light" style="background:white">
+     <div class="navbar row justify-content-center lead fixed-top navbar-lioght background-light"
+        style="background:white">
          <nav class="navbar">
              <div class="column">
                  <a class="navbar-header navbar-brand" href="/">

@@ -21,8 +21,10 @@ def atualizar_springer():
         with open(ontem_str, encoding="utf-8") as file:
             records = literal_eval(file.read())
     else:
-        locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
-
+        try:
+            locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
+        except Exception:
+            pass
         date_format = "%Y-%m-%d"
         dateto = "onlinedateto:" + ontem.strftime(date_format)
         datefrom = "onlinedatefrom:" + (ontem - timedelta(days=7)).strftime(date_format)
@@ -60,7 +62,10 @@ def atualizar_pubmed():
         with open(ontem_str, encoding="utf-8") as file:
             records = literal_eval(file.read())
     else:
-        locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
+        try:
+            locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
+        except Exception:
+            pass
         db = "db=pubmed"
         term = "term=covid-19"
         reldate = "reldate=1"

@@ -39,7 +39,7 @@ class DataframeBrasil:
         pass
 
 
-def atualizar_dados():
+def atualizar_dados(pais=None):
     ontem = date.today() - timedelta(days=1)
 
     ontem_str = ontem.strftime("%Y-%m-%d") + ".xlsx"

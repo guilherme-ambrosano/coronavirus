@@ -1,35 +1,16 @@
 {% extends "layout.html" %}
 {% block body %}
+
 <h2>Artigos recentes (Springer Nature)</h2>
 <hr>
-{% for artigo in springer %}
-<div class="col-sm">
-    <div class="row"> {{ artigo.onlineDate }} </div>
-    <div class="row">
-        <a href="{{ artigo.url.value }}" target="_blank">
-            {{ artigo.title }}
-        </a>
-    </div>
-    <div class="row">
-        {{ artigo.authors }}
-    </div>
-</div>
-<hr>
-{% endfor %}
+<div class="springer"><h3 style="color:rgb(80, 79, 79)">Carregando...</p></div>
+
 <h2>Artigos recentes (PubMed)</h2>
 <hr>
-{% for artigo in pubmed %}
-<div class="col-sm">
-    <div class="row"> {{ artigo.onlineDate }} </div>
-    <div class="row">
-        <a href="{{ artigo.link }}" target="_blank">
-            {{ artigo.title }}
-        </a>
-    </div>
-    <div class="row">
-        {{ artigo.authors }}
-    </div>
-</div>
-<hr>
-{% endfor %}
+<div class="pubmed"><h3 style="color:rgb(80, 79, 79)">Carregando...</p></div>
+
+<script type="text/javascript"
+    src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js" ></script>
+<script type="text/javascript" src="static/celery.js"></script>
+<script type="text/javascript" src="static/bases.js"></script>
 {% endblock %}

@@ -1,16 +1,24 @@
 {% extends "layout.html" %}
 {% block head %}
+
+<link rel="stylesheet" type="text/css"
+    href="http://cdn.pydata.org/bokeh/release/bokeh-2.0.0.min.css" >
+<script type="text/javascript" 
+    src="http://cdn.pydata.org/bokeh/release/bokeh-2.0.0.min.js" ></script>
+<script type="text/javascript"
+    src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js" ></script>
 <script>
     var df = {{ df | tojson }}
 </script>
 <script type="text/javascript" src="static/plots.js"></script>
+
 {% endblock %}
 {% block body %}
     <h2>Casos de COVID-19{% if selecionado is not none %}: {{ selecionado }}{% endif %}</h2>
     <hr>
     <p>Última atualização: {{ data }}</p>
     <hr>
-    <form action="/casos">
+    <form action="/casos" onchange="update_df();">
         <select id="pais" name="pais">
             {% for p in paises %}
             <option value="{{p}}" {% if p == selecionado %} selected {% endif %}> {{p}} </option>
