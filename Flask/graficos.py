@@ -4,6 +4,8 @@
 
 import math
 
+import json
+
 import pandas as pd
 import numpy as np
 import urllib
@@ -22,6 +24,7 @@ import os
 
 from geopy.geocoders import Nominatim
 from geopy.extra.rate_limiter import RateLimiter
+import pycountry
 
 
 # Configurando o geopy
@@ -29,17 +32,7 @@ geolocator = Nominatim(user_agent="corona", timeout=10)
 geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
 
 
-class DataframeMundo:
-    def __init__(self):
-        pass
-
-
-class DataframeBrasil:
-    def __init__(self):
-        pass
-
-
-def atualizar_dados(pais=None):
+def baixar_dados():
     ontem = date.today() - timedelta(days=1)
 
     ontem_str = ontem.strftime("%Y-%m-%d") + ".xlsx"
@@ -68,14 +61,76 @@ def atualizar_dados(pais=None):
 
         # Pegando as coordenadas dos países
         paises = atualizar_localizacao(df)
+        
+        # Pegando as siglas dos paises
+        paises = atualizar_siglas(paises)
+
+        # Salvando
         paises.to_excel("paises_" + ontem_str)
 
-    else:
-        # Se já tiver planilha, é só ler
-        df = pd.read_excel(ontem_str)
-        paises = pd.read_excel("paises_" + ontem_str)
 
+def atualizar_dados_json(pais=None):
+    ontem = date.today() - timedelta(days=1)
+
+    ontem_str = ontem.strftime("%Y-%m-%d") + ".xlsx"
+    arquivos_excel = [arq for arq in os.listdir(".") if arq.endswith(".xlsx")]
+    if ontem_str not in arquivos_excel:
+        baixar_dados()
+
+    df = pd.read_excel(ontem_str)
+    
+    if pais is not None:
+        pais = pais.replace("_", " ")
+        df = df.loc[df["countriesAndTerritories"] == pais]
+
+    df["dateRep"] = df["dateRep"].apply(lambda x: x.strftime("%Y-%m-%d"))
+    df_json = json.dumps(df.reset_index().to_dict())
+
+    return df_json
+
+
+def atualizar_dados():
+    ontem = date.today() - timedelta(days=1)
+
+    ontem_str = ontem.strftime("%Y-%m-%d") + ".xlsx"
+    arquivos_excel = [arq for arq in os.listdir(".") if arq.endswith(".xlsx")]
+    if ontem_str not in arquivos_excel or "paises_" + ontem_str not in arquivos_excel:
+        baixar_dados()
+
+    df = pd.read_excel(ontem_str)
+    paises = pd.read_excel("paises_" + ontem_str)
+    
     return paises, df
+
+
+def retornar_sigla(pais):
+    sigla = pycountry.countries.get(name=pais)
+    if sigla is not None:
+        sigla = sigla.alpha_2
+    else:
+        sigla = pycountry.countries.get(official_name=pais)
+        if sigla is not None:
+            sigla = sigla.alpha_2
+        else:
+            geocode_location = geocode(pais)
+            if geocode_location is None:
+                return sigla
+            sigla = pycountry.countries.get(name=geocode_location.address)
+            if sigla is not None:
+                sigla = sigla.alpha_2
+            else:
+                sigla = pycountry.countries.get(official_name=geocode_location.address)
+                if sigla is not None:
+                    sigla = sigla.alpha_2
+
+    return sigla
+
+
+def atualizar_siglas(paises):
+    paises["sigla"] = paises["countriesAndTerritories"]\
+    .replace("_", " ", regex=True)\
+    .apply(retornar_sigla)
+    return paises
 
 
 def atualizar_localizacao(df):
@@ -136,41 +191,3 @@ def atualizar_grafico_expon(pais=None, df=None):
 
     script, div = components(p)
     return script, div
-
-
-def merc(point):
-    if point is np.nan:
-        return None, None
-
-    lat, lon, _ = literal_eval(point)
-
-    r_major = 6378137.000
-    x = r_major * math.radians(lon)
-    scale = x / lon
-    y = 180.0 / math.pi * math.log(math.tan(math.pi / 4.0 + lat * (math.pi / 180.0) / 2.0)) * scale
-
-    return x, y
-
-
-def atualizar_grafico_mapa(paises=None):
-    if paises is None:
-        paises, df = atualizar_dados()
-
-    paises["x"] = paises.point.apply(lambda x: merc(x)[0])
-    paises["y"] = paises.point.apply(lambda x: merc(x)[1])
-    tile_provider = get_provider(CARTODBPOSITRON)
-    p = figure(plot_width=800, plot_height=500,
-               x_range=(-2000000, 6000000), y_range=(-1000000, 7000000),
-               x_axis_type="mercator", y_axis_type="mercator")
-    p.toolbar.active_scroll = p.select_one(WheelZoomTool)
-    p.add_tile(tile_provider)
-    p.circle(x=paises.x,
-             y=paises.y,
-             size=paises.cases / 5000,
-             line_color="navy",
-             fill_color="navy",
-             fill_alpha=0.05)
-
-    script, div = components(p)
-    return script, div
-

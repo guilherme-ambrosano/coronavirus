@@ -12,8 +12,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 import os
 
-from graficos import atualizar_dados,\
-    atualizar_grafico_aumento, atualizar_grafico_expon, atualizar_grafico_mapa
+from graficos import atualizar_dados, atualizar_dados_json,\
+    atualizar_grafico_aumento, atualizar_grafico_expon
 from bases import atualizar_pubmed, atualizar_springer
 
 from datetime import date, datetime, timedelta
@@ -29,14 +29,18 @@ app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 
 celery = iniciar_celery(app)
 
+#
+#    Criando tarefas no Celery
+#
+
 @celery.task(name="atualizar_dados_async")
-def atualizar_dados_async(pais=None):
-    paises, df = atualizar_dados(pais)
-    return paises, df
+def atualizar_dados_async(pais):
+    json_pais = atualizar_dados_json(pais)
+    return {'current': 100, 'total': 100, 'status': 'Concluído',
+            'result': json_pais}
 
 @celery.task(name="atualizar_springer_async", bind=True)
 def atualizar_springer_async(self):
-    print("Atualizando dados da springer...")
     self.records = atualizar_springer()
     return {'current': 100, 'total': 100, 'status': 'Concluído',
             'result': self.records}
@@ -59,33 +63,20 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-@app.route("/update_df")
-def update():
-    try:
-        pais = request.args.get("pais")
-        if pais is not None:
-            pais = pais.replace(" ", "_")
-            _, df = atualizar_dados_async.delay()
-            df_pais = df.loc[df["countriesAndTerritories"] == pais].to_dict(orient="list")
-            del df_pais["Unnamed: 0"]
-            return jsonify(df_pais)
-        else:
-            return None
-    except Exception as e:
-        return str(e)
+#
+#    Rotas pra checar as tarefas do Celery
+#
 
-
-@app.route('/status/<task_id>')
-def taskstatus(task_id):
-    task = atualizar_springer_async.AsyncResult(task_id)
+@app.route('/status_dados/<task_id>')
+def checar_dados(task_id):
+    task = atualizar_dados_async.AsyncResult(task_id)
     if task.state == 'PENDING':
-        # job did not start yet
         response = { 
             'task': {
                 'status': task.state,
                 'current': 0,
                 'total': 1,
-                'state': 'Pending...'
+                'state': 'Pendente...'
             }
         }
     elif task.state != 'FAILURE':
@@ -100,34 +91,117 @@ def taskstatus(task_id):
         if 'result' in task.info:
             response['task']['result'] = task.info['result']
     else:
-        # something went wrong in the background job
         response = {
             'task': {
                 'status': task.state,
                 'current': 1,
                 'total': 1,
-                'state': str(task.info),  # this is the exception raised
+                'state': str(task.info),
+            }
+        }
+    return response
+
+@app.route('/status_springer/<task_id>')
+def checar_springer(task_id):
+    task = atualizar_springer_async.AsyncResult(task_id)
+    if task.state == 'PENDING':
+        # job did not start yet
+        response = { 
+            'task': {
+                'status': task.state,
+                'current': 0,
+                'total': 1,
+                'state': 'Pendente...'
+            }
+        }
+    elif task.state != 'FAILURE':
+        response = {
+            'task': {
+                'status': task.state,
+                'current': task.info.get('current', 0),
+                'total': task.info.get('total', 1),
+                'state': task.info.get('status', '')
+            }
+        }
+        if 'result' in task.info:
+            response['task']['result'] = task.info['result']
+    else:
+        response = {
+            'task': {
+                'status': task.state,
+                'current': 1,
+                'total': 1,
+                'state': str(task.info),
+            }
+        }
+    return response
+
+@app.route('/status_pubmed/<task_id>')
+def checar_pubmed(task_id):
+    task = atualizar_pubmed_async.AsyncResult(task_id)
+    if task.state == 'PENDING':
+        # job did not start yet
+        response = { 
+            'task': {
+                'status': task.state,
+                'current': 0,
+                'total': 1,
+                'state': 'Pendente...'
+            }
+        }
+    elif task.state != 'FAILURE':
+        response = {
+            'task': {
+                'status': task.state,
+                'current': task.info.get('current', 0),
+                'total': task.info.get('total', 1),
+                'state': task.info.get('status', '')
+            }
+        }
+        if 'result' in task.info:
+            response['task']['result'] = task.info['result']
+    else:
+        response = {
+            'task': {
+                'status': task.state,
+                'current': 1,
+                'total': 1,
+                'state': str(task.info),
             }
         }
     return response
 
 
+@app.route("/update_df")
+def update_df():
+    try:
+        pais = request.args.get("pais")
+        print(pais)
+        if pais is not None:
+            pais = pais.replace(" ", "_")
+            dados_async = atualizar_dados_async.delay(pais=pais)
+            
+            return jsonify({"Location": url_for('checar_dados',
+                            task_id=dados_async.id)}), 202
+        else:
+            return None
+    except Exception as e:
+        return str(e)
+
 @app.route("/atualizar_springer")
 def atualizar_springer_flask():
     springer_async = atualizar_springer_async.delay()
     
-    print(springer_async.id)
-    
-    return jsonify({'Location': url_for('taskstatus',
-                                                  task_id=springer_async.id)}), 202
+    return jsonify({'Location': url_for('checar_springer',
+                   task_id=springer_async.id)}), 202
 
 
 @app.route("/atualizar_pubmed")
 def atualizar_pubmed_flask():
     pubmed_async = atualizar_pubmed_async.delay()
     
-    return jsonify({'Location': url_for('taskstatus',
-                                                  task_id=pubmed_async.id)}), 202
+    return jsonify({'Location': url_for('checar_pubmed',
+                   task_id=pubmed_async.id)}), 202
 
 
 @app.route("/")
@@ -149,10 +223,6 @@ def casos():
 
     paises, df = atualizar_dados()
 
-    script, div = atualizar_grafico_mapa(paises=paises)
-    divs.append(div)
-    scripts.append(script)
-
     script, div = atualizar_grafico_aumento(pais=pais, df=df)
     divs.append(div)
     scripts.append(script)
@@ -164,10 +234,20 @@ def casos():
     ultima_atualizacao = date.today() - timedelta(days=1)
     data = ultima_atualizacao.strftime("%d/%m/%Y")
 
+    paises["countriesAndTerritories"].replace("_", " ", regex=True, inplace=True)
+    paises = paises\
+        .rename(columns={
+            "countriesAndTerritories": "name",
+            "sigla": "id",
+            "cases": "value"})[["id", "name", "value"]]\
+        .dropna()\
+        .to_dict("index")
+    paises = list(paises.values())
+
     paises_txt = df["countriesAndTerritories"].replace("_", " ", regex=True).unique()
     return render_template("casos.html", scripts=scripts, divs=divs, data=data,
                            paises=paises_txt, selecionado=selecionado,
-                           route="casos", df=df.reset_index().to_dict("list"))
+                           route="casos", df_paises=paises)
 
 
 @app.route("/noticias")
@@ -191,7 +271,3 @@ def fontes():
 @app.route("/contato")
 def contato():
     return render_template("contato.html", route="contato")
-
-
-if __name__ == "__main__":
-    app.run()

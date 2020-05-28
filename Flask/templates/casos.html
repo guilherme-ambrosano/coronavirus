@@ -1,16 +1,15 @@
 {% extends "layout.html" %}
 {% block head %}
 
-<link rel="stylesheet" type="text/css"
-    href="http://cdn.pydata.org/bokeh/release/bokeh-2.0.0.min.css" >
-<script type="text/javascript" 
-    src="http://cdn.pydata.org/bokeh/release/bokeh-2.0.0.min.js" ></script>
+<link rel="stylesheet" type="text/css" href="http://cdn.pydata.org/bokeh/release/bokeh-2.0.2.min.css">
+<script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-2.0.2.min.js"></script>
+
+<script src="//www.amcharts.com/lib/4/core.js"></script>
+<script src="//www.amcharts.com/lib/4/maps.js"></script>
+<script src="//www.amcharts.com/lib/4/geodata/worldLow.js"></script>
+
 <script type="text/javascript"
     src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js" ></script>
-<script>
-    var df = {{ df | tojson }}
-</script>
-<script type="text/javascript" src="static/plots.js"></script>
 
 {% endblock %}
 {% block body %}
@@ -29,6 +28,7 @@
     <hr>
 
     <h3>Gráficos</h3>
+    <div id="mapa"></div>
     <hr>
     <div class="col-sm">
         {% for div in divs %}
@@ -41,4 +41,10 @@
     {% for script in scripts %}
     {{ script|indent(4)|safe }}
     {% endfor %}
+
+<script type="text/javascript">
+    var df_paises = {{ df_paises | list | safe}};
+</script>
+<script type="text/javascript" src="static/celery.js"></script>
+<script type="text/javascript" src="static/plots.js"></script>
 {% endblock %}
